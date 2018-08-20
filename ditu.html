@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>点击省份显示当前地区</title>
+	     <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,user-scalable=no"/>-->
+
+    <style>
+        #main {
+            position: relative;
+        }
+        .p {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            border: 1px #000000 solid;
+            background: #3B4352;
+            opacity: 0.7;
+            width: 80%;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction:column;
+            flex-wrap:wrap;
+        }
+        span{
+            width: 20%;
+            color: white;
+            font-size: 22px;
+            margin: 10px;
+            display: inline-block;
+        }
+
+
+        .box2{
+            width: 100%;
+            height: auto;
+            color: white;
+            font-size: 28px;
+            text-align: center;
+        }
+        .box2 img{
+            width: 60px;
+        }
+        .box2 p{
+            width: 20%;
+            display:inline-block;
+            padding: 20px 10px;
+            margin: 20px 0;
+            font-size: 30px;
+        }
+        .box2-img{
+            width: 558px;
+            height:558px;
+            overflow: hidden;
+            display: none;
+            position: absolute;
+            border: 2px solid red;
+            top: 80%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+        }
+        .box2-img img{
+        	/*position: absolute;
+        	top: 0;
+        	bottom: 0;
+        	right: 0;
+        	left: 0;
+        	margin: auto;*/
+        	width: 258px;
+        	height: 258px;
+        	padding-top: 150px;
+        	padding-left: 150px;
+        	position: absolute;
+        	z-index: 999999999999999;
+        }
+        .box2-img img:hover{
+        	
+        }
+/* /* /* /* /* /* /* /* /*
+	.qrcode{
+	    padding:200px 0 0 200px !important;
+	    margin:-200px 0 0 -200px !important;
+	    position: relative;z-index: 100;
+	    -webkit-user-select: none;
+	}*/
+    </style>
+</head>
+<body>
+<div id="main" style="height: 1800px;">
+
+</div>
+
+<div class="p" style="display:none;">
+    <div class="box2"></div>
+</div>
+<!--<div class="box-img"></div>-->
+
+
+
+
+<script src="http://echarts.baidu.com/build/dist/echarts-all.js"></script>
+<script src="js/jquery1.4.3.min.js"></script>
+<script type="text/javascript">
+    var myCharts = echarts.init(document.getElementById("main"));
+
+    var option = {
+        title : {
+            // text : "地图详情"
+        },
+        tooltip : {
+            show: true,
+            formatter: "{b}"
+        },
+        series: [
+            {
+                name: '陕西',
+                type: 'map',
+                mapType: '陕西',
+                layoutSize: 100,
+                selectedMode : 'single',//multiple多选
+                itemStyle:{
+                    normal:{
+                        label:{
+                            show:true,
+                            textStyle: {
+                                color: "#231816",
+                                fontSize:34,
+                            }
+                        },
+                     areaStyle:{
+                             color: '#B1D0EC',
+
+                     },
+                        borderColor:'#fff', //区块的边框颜色
+                        border:3
+                    },
+                 emphasis:{//鼠标hover样式
+                     label:{
+                         show:true,
+                         textStyle:{
+                             color:'#fa4f04',
+                             fontSize:34,
+                         }
+                     }
+                 }
+                },
+                data:[
+
+                ]
+            }
+        ]
+    }
+    myCharts.setOption(option)
+
+    // 点击显示县区
+    var name;
+    // $(".box2").html('')
+    myCharts.on('click',function(param){
+        console.log(param.name);
+        $(".p").show();
+        name=param.name;
+        stopproPagations(param)
+        $(".box2").show();
+        $.get("ajax.json",function(data,status){
+            $(".box2").html('')
+            $.each(data, function(i,val) {
+                if(val.id==name){
+//                  console.log(val)
+                    $.each(val.list, function(i,value) {
+//                      console.log(value.img)
+                        html="<p>"+value.region+"</p>";
+                        var trs = '<img  src="'+value.img+'">'
+//						 var trs = '<img  src="img/77.jpg">'
+                        $(".box2").append(html)
+                        $(".box2").append(trs)   //img/24.jpg
+                        $(".box2 img").hide()
+                        
+						
+                    });
+
+                }
+            });
+            $(".box2-img").html('');
+            $(".box2 p").click(function(){
+                $(".box2-img").show()
+                var aa=$(this).next().attr('src');
+//              console.log(aa)
+                var mm = '<img  src="'+aa+'" class="qq">'
+//              console.log(mm)
+                $(".box2-img").prepend(mm)
+                var region=$(this).html();
+//              console.log(region)
+
+				window.parent.postMessage('{"region": "'+region+'", "img": "'+aa+'"}', 'http://192.168.1.106:8020/xysc.html');  //本地ip
+            })
+        });
+
+    });
+
+
+    // 点击模态框以外地区隐藏县区
+    $(document).click(function(){
+        $(".p").css('display','none');
+    });
+    $(".p").click(function(event){
+        event.stopPropagation();
+    });
+
+    // 点击模态框以外地区隐藏县区
+    $(document).click(function(){
+        $(".box2-img").css('display','none');
+    });
+    $(".box2-img").click(function(event){
+        event.stopPropagation();
+    });
+
+    // 阻止冒泡事件
+    function stopproPagations(e){
+        window.event?window.event.cancelBubble=true:e.stopPropagation();
+        e.preventDefault?e.preventDefault():window.event.returnValue=false;
+    }
+
+
+//	$('button').click(function() {
+	    
+//	});
+
+	// 接收父页面发送的数据
+	window.addEventListener("message", function( e ) {
+	    console.log(e.data);
+	    console.log('1313131231')
+	}, false );
+
+</script>
+
+</body>
+</html>
